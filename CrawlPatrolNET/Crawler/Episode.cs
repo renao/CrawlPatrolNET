@@ -5,6 +5,7 @@
         public string Title;
         public string Image;
         public string Description;
+        public string URL;
 
     }
 }
