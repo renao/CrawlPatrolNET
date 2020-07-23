@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using CrawlPatrolNET.Crawler;
 using Telegram.Bot;
 using Telegram.Bot.Args;
@@ -11,13 +10,13 @@ namespace CrawlPatrolNET.TelegramBot
     public class Bot
     {
 
-        private List<long> ChatIds = new List<long>() { 85700835L };
+        private List<long> SubscriberChatIds = new List<long>() { };
         private EpisodeStore EpisodeStore;
         private ITelegramBotClient BotClient;
 
-        public Bot()
+        public Bot(string accessToken)
         {
-            this.BotClient = new TelegramBotClient("1268728321:AAG_55XXdSBlqW9tO0AST3LrhKHZ6Euc1xI");
+            this.BotClient = new TelegramBotClient(accessToken);
             BotClient.OnMessage += this.OnMessage;
             BotClient.StartReceiving();
         }
@@ -30,8 +29,8 @@ namespace CrawlPatrolNET.TelegramBot
 
         private void OnNewEpisodes(List<Episode> episodes)
         {
-            var message = $"<strong>Neues verfügbar!</strong>";
-            foreach (var chatId in this.ChatIds)
+            var message = $"<strong>Neue Folge verfügbar!</strong>";
+            foreach (var chatId in this.SubscriberChatIds)
             {
                 this.BotClient.SendTextMessageAsync(
                     chatId,
@@ -40,24 +39,60 @@ namespace CrawlPatrolNET.TelegramBot
                     .Wait();
                 foreach (var episode in episodes)
                 {
-                    var episodeCaption = $"{episode.Title} {System.Environment.NewLine} {System.Environment.NewLine} {episode.Description} {System.Environment.NewLine} {System.Environment.NewLine}  {episode.URL}";
-                    this.BotClient.SendPhotoAsync(chatId, new Telegram.Bot.Types.InputFiles.InputOnlineFile(episode.Image), episodeCaption).Wait();
-                
+                    this.SendEpisodeMessage(chatId, episode);
                 }
             }
         }
 
-        private void OnMessage(object _sender, MessageEventArgs e)
+        private void SendCurrentEpisodes(long chatId)
         {
-            if (e.Message.Text == "/start")
+            foreach (var episode in this.EpisodeStore.CurrentEpisodes)
             {
-                this.SaveChatId(e.Message.Chat.Id);
+                this.SendEpisodeMessage(chatId, episode);
             }
         }
 
-        private void SaveChatId(long chatId)
+        private void SendEpisodeMessage(long chatId, Episode episode)
         {
-            this.ChatIds.Add(chatId);
+            var episodeCaption = $"{episode.Title} {Environment.NewLine} {Environment.NewLine} {episode.Description} {Environment.NewLine} {Environment.NewLine}  {episode.URL}";
+            this.BotClient
+                .SendPhotoAsync(
+                chatId,
+                new Telegram.Bot.Types.InputFiles.InputOnlineFile(episode.Image),
+                episodeCaption).Wait();
+
+        }
+
+        private void OnMessage(object _sender, MessageEventArgs e)
+        {
+            switch (e.Message.Text)
+            {
+                case "/start":
+                    this.Subscribe(e.Message.Chat.Id);
+                    break;
+                case "/stop":
+                    this.Unsubscribe(e.Message.Chat.Id);
+                    break;
+                case "/current2":
+                    this.SendCurrentEpisodes(e.Message.Chat.Id);
+                    break;
+            }
+        }
+
+        private void Subscribe(long chatId)
+        {
+            if (!this.SubscriberChatIds.Contains(chatId))
+            {
+                this.SubscriberChatIds.Add(chatId);
+            }
+        }
+
+        private void Unsubscribe(long chatId)
+        {
+            if (this.SubscriberChatIds.Contains(chatId))
+            {
+                this.SubscriberChatIds.RemoveAll(l => l == chatId);
+            }
         }
     }
 }

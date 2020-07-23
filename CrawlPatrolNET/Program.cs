@@ -16,24 +16,21 @@ namespace CrawlPatrolNET
 
         static void Main(string[] args)
         {
+            if (args.Length < 1)
+            {
+                Console.WriteLine("Fehler - Bitte geben Sie Ihren Telegram-Bot AccessToken an");
+                return;
+            }
+
             PrepareCrawler();
-            PrepareBot();
+            PrepareBot(args[0]);
 
             StartBot();
-
-            Timer = new Timer(TimerInterval);
-            Timer.Elapsed += OnCrawl;
-            Timer.AutoReset = true;
-            Timer.Start();
+            StartTimer();
 
             Crawler.Crawl();
 
             Console.ReadKey();
-        }
-
-        private static void OnCrawl(object _sender, ElapsedEventArgs _e)
-        {
-            Crawler?.Crawl();
         }
 
         private static void PrepareCrawler()
@@ -42,14 +39,19 @@ namespace CrawlPatrolNET
             Crawler = new PawPatrolCrawler(EpisodeStore);
         }
 
-        private static void PrepareBot()
+        private static void PrepareBot(string accessToken)
         {
-            Bot = new Bot();
+            Bot = new Bot(accessToken);
         }
 
-        private static void StartCrawler()
+        private static void StartTimer()
         {
-            Crawler.Crawl();
+            Timer = new Timer(TimerInterval);
+            Timer.Elapsed += (_s, _e) => Crawler?.Crawl();
+            Timer.AutoReset = true;
+            Timer.Start();
+
+            Crawler?.Crawl();
         }
 
         private static void StartBot()
