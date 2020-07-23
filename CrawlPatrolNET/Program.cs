@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Timers;
 using CrawlPatrolNET.Crawler;
 using CrawlPatrolNET.TelegramBot;
 
@@ -10,6 +11,8 @@ namespace CrawlPatrolNET
         private static Bot Bot;
 
         private static EpisodeStore EpisodeStore;
+        private static Timer Timer;
+        private static double TimerInterval = 30 * 60 * 1_000;
 
         static void Main(string[] args)
         {
@@ -17,9 +20,20 @@ namespace CrawlPatrolNET
             PrepareBot();
 
             StartBot();
-            StartCrawler();
+
+            Timer = new Timer(TimerInterval);
+            Timer.Elapsed += OnCrawl;
+            Timer.AutoReset = true;
+            Timer.Start();
+
+            Crawler.Crawl();
 
             Console.ReadKey();
+        }
+
+        private static void OnCrawl(object _sender, ElapsedEventArgs _e)
+        {
+            Crawler?.Crawl();
         }
 
         private static void PrepareCrawler()
