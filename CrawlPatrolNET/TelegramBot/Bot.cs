@@ -4,6 +4,7 @@ using CrawlPatrolNET.Crawler;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 using System.Linq;
+using Telegram.Bot.Types;
 
 namespace CrawlPatrolNET.TelegramBot
 {
@@ -60,8 +61,9 @@ namespace CrawlPatrolNET.TelegramBot
                 chatId,
                 new Telegram.Bot.Types.InputFiles.InputOnlineFile(episode.Image),
                 episodeCaption).Wait();
-
         }
+
+
 
         private void OnMessage(object _sender, MessageEventArgs e)
         {
@@ -69,14 +71,30 @@ namespace CrawlPatrolNET.TelegramBot
             {
                 case "/start":
                     this.Subscribe(e.Message.Chat.Id);
+                    this.SendStartAnswer(e.Message);
                     break;
                 case "/stop":
                     this.Unsubscribe(e.Message.Chat.Id);
+                    this.SendStopAnswer(e.Message);
                     break;
-                case "/current2":
+                case "/current":
                     this.SendCurrentEpisodes(e.Message.Chat.Id);
                     break;
             }
+        }
+
+        private void SendStartAnswer(Message message)
+        {
+            this.BotClient
+                .SendTextMessageAsync(message.Chat.Id,
+                $"Willkommen {message.Chat.FirstName}!{Environment.NewLine}{Environment.NewLine}Wir benachrichtigen dich, sobald es neue frei-verfügbare Episoden gibt.{Environment.NewLine}{Environment.NewLine}Um die aktuell verfügbaren Folgen anzuzeigen gebe /current ein.");
+        }
+
+        private void SendStopAnswer(Message message)
+        {
+            this.BotClient
+                .SendTextMessageAsync(message.Chat.Id,
+                $"Na gut!{Environment.NewLine}{Environment.NewLine}Wir lassen dich mit automatischen Antworten ab sofort in Ruhe.");
         }
 
         private void Subscribe(long chatId)
