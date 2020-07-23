@@ -3,20 +3,23 @@ using System.Collections.Generic;
 using CrawlPatrolNET.Crawler;
 using Telegram.Bot;
 using Telegram.Bot.Args;
-using System.Linq;
 using Telegram.Bot.Types;
+using CrawlPatrolNET.DataStore;
 
 namespace CrawlPatrolNET.TelegramBot
 {
     public class Bot
     {
 
-        private List<long> SubscriberChatIds = new List<long>() { };
+        // private List<long> SubscriberChatIds = new List<long>() { };
         private EpisodeStore EpisodeStore;
         private ITelegramBotClient BotClient;
+        private BotSubscribersStore SubscribersStore;
+
 
         public Bot(string accessToken)
         {
+            this.SubscribersStore = new BotSubscribersStore();
             this.BotClient = new TelegramBotClient(accessToken);
             BotClient.OnMessage += this.OnMessage;
             BotClient.StartReceiving();
@@ -31,7 +34,7 @@ namespace CrawlPatrolNET.TelegramBot
         private void OnNewEpisodes(List<Episode> episodes)
         {
             var message = $"<strong>Neue Folge verfügbar!</strong>";
-            foreach (var chatId in this.SubscriberChatIds)
+            foreach (var chatId in this.SubscribersStore.Subscribers)
             {
                 this.BotClient.SendTextMessageAsync(
                     chatId,
@@ -87,30 +90,33 @@ namespace CrawlPatrolNET.TelegramBot
         {
             this.BotClient
                 .SendTextMessageAsync(message.Chat.Id,
-                $"Willkommen {message.Chat.FirstName}!{Environment.NewLine}{Environment.NewLine}Wir benachrichtigen dich, sobald es neue frei-verfügbare Episoden gibt.{Environment.NewLine}{Environment.NewLine}Um die aktuell verfügbaren Folgen anzuzeigen gebe /current ein.");
+                $"Willkommen {message.Chat.FirstName}!" +
+                $"{Environment.NewLine}" +
+                $"{Environment.NewLine}" +
+                $"Wir benachrichtigen dich, sobald es neue frei-verfügbare Episoden gibt." +
+                $"{Environment.NewLine}" +
+                $"{Environment.NewLine}" +
+                $"Um die aktuell verfügbaren Folgen anzuzeigen gebe /current ein.");
         }
 
         private void SendStopAnswer(Message message)
         {
             this.BotClient
                 .SendTextMessageAsync(message.Chat.Id,
-                $"Na gut!{Environment.NewLine}{Environment.NewLine}Wir lassen dich mit automatischen Antworten ab sofort in Ruhe.");
+                $"Na gut!" +
+                $"{Environment.NewLine}" +
+                $"{Environment.NewLine}" +
+                $"Wir lassen dich mit automatischen Antworten ab sofort in Ruhe.");
         }
 
         private void Subscribe(long chatId)
         {
-            if (!this.SubscriberChatIds.Contains(chatId))
-            {
-                this.SubscriberChatIds.Add(chatId);
-            }
+            this.SubscribersStore.Add(chatId);
         }
 
         private void Unsubscribe(long chatId)
         {
-            if (this.SubscriberChatIds.Contains(chatId))
-            {
-                this.SubscriberChatIds.RemoveAll(l => l == chatId);
-            }
+            this.SubscribersStore.Remove(chatId);
         }
     }
 }

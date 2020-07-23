@@ -15,5 +15,6 @@
   <ItemGroup>
     <Folder Include="Crawler\" />
     <Folder Include="TelegramBot\" />
+    <Folder Include="DataStore\" />
   </ItemGroup>
 </Project>
