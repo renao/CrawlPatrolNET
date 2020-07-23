@@ -10,18 +10,18 @@ namespace CrawlPatrolNET.Crawler
     {
         public event Action<List<Episode>> NewEpisodes;
 
-        private List<Episode> CurrentEpisodes = new List<Episode>();
+        public List<Episode> CurrentEpisodes = new List<Episode>();
 
 
         public void UpdateCurrentEpisodes(List<Episode> episodes)
         {
             var storedTitles
                 = this.CurrentEpisodes
-                .Select(e => e.Title)
+                .Select(e => e.URL)
                 .ToList();
             var newEpisodes
                 = episodes
-                .Where(e => !storedTitles.Contains(e.Title))
+                .Where(e => !storedTitles.Contains(e.URL))
                 .ToList();
 
             this.CurrentEpisodes = episodes;
