@@ -59,14 +59,23 @@ namespace CrawlPatrolNET.TelegramBot
         private void SendEpisodeMessage(long chatId, Episode episode)
         {
             var episodeCaption = $"{episode.Title} {Environment.NewLine} {Environment.NewLine} {episode.Description} {Environment.NewLine} {Environment.NewLine}  {episode.URL}";
-            this.BotClient
-                .SendPhotoAsync(
-                chatId,
-                new Telegram.Bot.Types.InputFiles.InputOnlineFile(episode.Image),
-                episodeCaption).Wait();
+
+            if (string.IsNullOrEmpty(episode?.Image))
+            {
+                this.BotClient
+                    .SendTextMessageAsync(chatId, episodeCaption)
+                    .Wait();
+            }
+            else
+            {
+                this.BotClient
+                    .SendPhotoAsync(
+                        chatId,
+                        new Telegram.Bot.Types.InputFiles.InputOnlineFile(episode.Image),
+                        episodeCaption)
+                    .Wait();
+            }
         }
-
-
 
         private void OnMessage(object _sender, MessageEventArgs e)
         {
