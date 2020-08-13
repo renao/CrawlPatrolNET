@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Web;
 using HtmlAgilityPack;
 
 namespace CrawlPatrolNET.Crawler
@@ -55,8 +56,8 @@ namespace CrawlPatrolNET.Crawler
             var routeNode = node.SelectSingleNode("./a[@class=\"route\"]");
             return new Episode
             {
-                Title = titleNode?.InnerText,
-                Description = descriptionNode?.InnerText,
+                Title = HttpUtility.HtmlDecode(titleNode?.InnerText),
+                Description = HttpUtility.HtmlDecode(descriptionNode?.InnerText),
                 Image = imageUrlNode?.GetAttributeValue("srcset", ""),
                 URL = $"http://nickjr.de{routeNode.GetAttributeValue("href", "")}"
             };
